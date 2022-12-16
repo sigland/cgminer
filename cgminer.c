@@ -3221,10 +3221,10 @@ static bool gbt_solo_decode(struct pool *pool, json_t *res_val)
 	flags = json_string_value(json_object_get(coinbase_aux, "flags"));
 	default_witness_commitment = json_string_value(json_object_get(res_val, "default_witness_commitment"));
 
-	if (!previousblockhash || !target || !version || !curtime || !bits || !coinbase_aux || !flags) {
-		applog(LOG_ERR, "Pool %d JSON failed to decode GBT", pool->pool_no);
-		return false;
-	}
+	if (!previousblockhash || !target || !version || !curtime || !bits) {
+ 		applog(LOG_ERR, "Pool %d JSON failed to decode GBT", pool->pool_no);
+ 		return false;
+ 	}
 
 	if (rules_arr) {
 		int i;
@@ -3300,10 +3300,12 @@ static bool gbt_solo_decode(struct pool *pool, json_t *res_val)
 	ofs += ser_number(pool->scriptsig_base + ofs, height); // max 5
 
 	/* Followed by flags */
-	len = strlen(flags) / 2;
-	pool->scriptsig_base[ofs++] = len;
-	hex2bin(pool->scriptsig_base + ofs, flags, len);
-	ofs += len;
+	if (flags) {
+		len = strlen(flags) / 2;
+		pool->scriptsig_base[ofs++] = len;
+		hex2bin(pool->scriptsig_base + ofs, flags, len);
+		ofs += len;
+	}
 
 	/* Followed by timestamp */
 	cgtime(&now);
@@ -3341,7 +3343,7 @@ static bool gbt_solo_decode(struct pool *pool, json_t *res_val)
 		+ 4 // txin sequence no
 		+ 1 // txouts
 		+ 8 // value
-		+ 1 + 25 // txout
+		+ 1 + pool->script_pubkey_len // txout
 		+ 4; // lock
 
 	if (insert_witness) {
@@ -3358,7 +3360,7 @@ static bool gbt_solo_decode(struct pool *pool, json_t *res_val)
 	*u64 = htole64(coinbasevalue);
 
 	if (insert_witness) {
-		unsigned char *witness = &pool->coinbase[41 + ofs + 4 + 1 + 8 + 1 + 25];
+		unsigned char *witness = &pool->coinbase[41 + ofs + 4 + 1 + 8 + 1 + pool->script_pubkey_len];
 
 		memset(witness, 0, 8);
 		witness_txout_len += 8;
@@ -3371,7 +3373,7 @@ static bool gbt_solo_decode(struct pool *pool, json_t *res_val)
 
 	pool->nonce2 = 0;
 	pool->n2size = 4;
-	pool->coinbase_len = 41 + ofs + 4 + 1 + 8 + 1 + 25 + witness_txout_len + 4;
+	pool->coinbase_len = 41 + ofs + 4 + 1 + 8 + 1 + pool->script_pubkey_len + witness_txout_len + 4;
 	cg_wunlock(&pool->gbt_lock);
 
 	snprintf(header, 257, "%s%s%s%s%s%s%s",
@@ -5303,7 +5305,7 @@ uint64_t share_diff(const struct work *work)
 	cg_wunlock(&control_lock);
 
 	if (unlikely(new_best))
-		applog(LOG_INFO, "New best share: %s", best_share);
+		applog(LOG_NOTICE, "New best share: %s", best_share);
 
 	return ret;
 }
@@ -7402,8 +7404,8 @@ static void __setup_gbt_solo(struct pool *pool)
 {
 	cg_wlock(&pool->gbt_lock);
 	cg_memcpy(pool->coinbase, scriptsig_header_bin, 41);
-	pool->coinbase[41 + pool->n1_len + 4 + 1 + 8] = 25;
-	cg_memcpy(pool->coinbase + 41 + pool->n1_len + 4 + 1 + 8 + 1, pool->script_pubkey, 25);
+	pool->coinbase[41 + pool->n1_len + 4 + 1 + 8] = pool->script_pubkey_len;
+	cg_memcpy(pool->coinbase + 41 + pool->n1_len + 4 + 1 + 8 + 1, pool->script_pubkey, pool->script_pubkey_len);
 	cg_wunlock(&pool->gbt_lock);
 }
 
@@ -7436,9 +7438,31 @@ static bool setup_gbt_solo(CURL *curl, struct pool *pool)
 		applog(LOG_ERR, "Bitcoin address %s is NOT valid", opt_btc_address);
 		goto out;
 	}
-	applog(LOG_NOTICE, "Solo mining to valid address: %s", opt_btc_address);
+	applog(LOG_INFO, "Solo mining to valid address: %s", opt_btc_address);
+	if (str_starts_with(opt_btc_address, "bc") || str_starts_with(opt_btc_address, "tb")) {
+		json_t** scriptPubKey_val;
+		snprintf(s, 256, "{\"id\": 2, \"method\": \"getaddressinfo\", \"params\": [\"%s\"]}\n", opt_btc_address);
+		val = json_rpc_call(curl, pool->rpc_url, pool->rpc_userpass, s, true, false, &rolltime, pool, false);
+		res_val = json_object_get(val, "result");
+		if (!res_val)
+			goto out;
+		scriptPubKey_val = json_object_get(res_val, "scriptPubKey");
+		const char* scriptPubKey = json_string_value(scriptPubKey_val);
+		pool->script_pubkey_len = strlen(scriptPubKey) / 2;
+		if (pool->script_pubkey_len > (25 + 3))	{
+			pool->script_pubkey_len = 0;
+			goto out;
+		}
+		hex2bin(pool->script_pubkey, scriptPubKey, pool->script_pubkey_len);
+		applog(LOG_DEBUG, "ScriptPubKey: %s, len: %i", scriptPubKey, pool->script_pubkey_len);
+	}
+	else {
+		address_to_pubkeyhash(pool->script_pubkey, opt_btc_address);
+		pool->script_pubkey_len = 25;
+	}
+
 	ret = true;
-	address_to_pubkeyhash(pool->script_pubkey, opt_btc_address);
+	
 	hex2bin(scriptsig_header_bin, scriptsig_header, 41);
 	__setup_gbt_solo(pool);
 

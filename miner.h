@@ -1438,6 +1438,8 @@ struct pool {
 	char *txn_data;
 	unsigned char scriptsig_base[100];
 	unsigned char script_pubkey[25 + 3];
+	size_t script_pubkey_len;
+
 	int nValue;
 	CURL *gbt_curl;
 	bool gbt_curl_inuse;
@@ -1459,6 +1461,7 @@ struct pool {
 	uint32_t current_height;
 
 	struct timeval tv_lastwork;
+
 #ifdef USE_BITMAIN_SOC
     bool support_vil;
     int version_num;

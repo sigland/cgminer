@@ -3738,3 +3738,9 @@ void _cg_memcpy(void *dest, const void *src, unsigned int n, const char *file, c
 	}
 	memcpy(dest, src, n);
 }
+
+bool str_starts_with(const char *a, const char *b)
+{
+   if(strncmp(a, b, strlen(b)) == 0) return 1;
+   return 0;
+}

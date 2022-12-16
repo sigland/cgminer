@@ -176,6 +176,7 @@ void cgsem_reset(cgsem_t *cgsem);
 void cgsem_destroy(cgsem_t *cgsem);
 bool cg_completion_timeout(void *fn, void *fnarg, int timeout);
 void _cg_memcpy(void *dest, const void *src, unsigned int n, const char *file, const char *func, const int line);
+bool str_starts_with(const char *a, const char *b);
 
 #define cgsem_init(_sem) _cgsem_init(_sem, __FILE__, __func__, __LINE__)
 #define cgsem_post(_sem) _cgsem_post(_sem, __FILE__, __func__, __LINE__)
