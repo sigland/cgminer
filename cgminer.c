@@ -709,7 +709,7 @@ static struct cgpu_info *get_thr_cgpu(int thr_id)
 	return thr->cgpu;
 }
 
-struct cgpu_info *get_devices(int id)
+struct cgpu_info *get_a_device(int id)
 {
 	struct cgpu_info *cgpu;
 
@@ -6094,7 +6094,7 @@ void zero_stats(void)
 	zero_bestshare();
 
 	for (i = 0; i < total_devices; ++i) {
-		struct cgpu_info *cgpu = get_devices(i);
+		struct cgpu_info *cgpu = get_a_device(i);
 
 		copy_time(&cgpu->dev_start_tv, &total_tv_start);
 
@@ -9486,7 +9486,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 			curses_print_status();
 			count = 0;
 			for (i = 0; i < total_devices; i++) {
-				cgpu = get_devices(i);
+				cgpu = get_a_device(i);
 #ifndef USE_USBUTILS
 				if (cgpu)
 #else
@@ -9496,7 +9496,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 			}
 #ifdef USE_USBUTILS
 			for (i = 0; i < total_devices; i++) {
-				cgpu = get_devices(i);
+				cgpu = get_a_device(i);
 				if (cgpu && cgpu->usbinfo.nodev)
 					curses_print_devstatus(cgpu, i, count++);
 			}
@@ -9559,7 +9559,7 @@ static void *watchdog_thread(void __maybe_unused *userdata)
 		}
 
 		for (i = 0; i < total_devices; ++i) {
-			struct cgpu_info *cgpu = get_devices(i);
+			struct cgpu_info *cgpu = get_a_device(i);
 			struct thr_info *thr = cgpu->thr[0];
 			enum dev_enable *denable;
 			char dev_str[8];
@@ -9687,7 +9687,7 @@ void print_summary(void)
 
 	applog(LOG_WARNING, "Summary of per device statistics:\n");
 	for (i = 0; i < total_devices; ++i) {
-		struct cgpu_info *cgpu = get_devices(i);
+		struct cgpu_info *cgpu = get_a_device(i);
 
 		cgpu->drv->get_statline_before = &blank_get_statline_before;
 		cgpu->drv->get_statline = &noop_get_statline;

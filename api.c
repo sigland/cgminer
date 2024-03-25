@@ -2034,7 +2034,7 @@ static void ascstatus(struct io_data *io_data, int asc, bool isjson, bool precom
 		if (dev < 0) // Should never happen
 			return;
 
-		struct cgpu_info *cgpu = get_devices(dev);
+		struct cgpu_info *cgpu = get_a_device(dev);
 		float temp = cgpu->temp;
 		double dev_runtime;
 
@@ -2106,7 +2106,7 @@ static void pgastatus(struct io_data *io_data, int pga, bool isjson, bool precom
 		if (dev < 0) // Should never happen
 			return;
 
-		struct cgpu_info *cgpu = get_devices(dev);
+		struct cgpu_info *cgpu = get_a_device(dev);
 		double frequency = 0;
 		float temp = cgpu->temp;
 		struct timeval now;
@@ -2276,7 +2276,7 @@ static void edevstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
 			if (dev < 0) // Should never happen
 				continue;
 
-			struct cgpu_info *cgpu = get_devices(dev);
+			struct cgpu_info *cgpu = get_a_device(dev);
 			if (!cgpu)
 				continue;
 			if (cgpu->blacklisted)
@@ -2304,7 +2304,7 @@ static void edevstatus(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
 			if (dev < 0) // Should never happen
 				continue;
 
-			struct cgpu_info *cgpu = get_devices(dev);
+			struct cgpu_info *cgpu = get_a_device(dev);
 			if (!cgpu)
 				continue;
 			if (cgpu->blacklisted)
@@ -2393,7 +2393,7 @@ static void pgaenable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
 		return;
 	}
 
-	cgpu = get_devices(dev);
+	cgpu = get_a_device(dev);
 
 	applog(LOG_DEBUG, "API: request to pgaenable pgaid %d device %d %s%u",
 			id, dev, cgpu->drv->name, cgpu->device_id);
@@ -2458,7 +2458,7 @@ static void pgadisable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
 		return;
 	}
 
-	cgpu = get_devices(dev);
+	cgpu = get_a_device(dev);
 
 	applog(LOG_DEBUG, "API: request to pgadisable pgaid %d device %d %s%u",
 			id, dev, cgpu->drv->name, cgpu->device_id);
@@ -2502,7 +2502,7 @@ static void pgaidentify(struct io_data *io_data, __maybe_unused SOCKETTYPE c, ch
 		return;
 	}
 
-	cgpu = get_devices(dev);
+	cgpu = get_a_device(dev);
 	drv = cgpu->drv;
 
 	if (!drv->identify_device)
@@ -3157,7 +3157,7 @@ static void notify(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe
 		io_open = io_add(io_data, COMSTR JSON_NOTIFY);
 
 	for (i = 0; i < total_devices; i++) {
-		cgpu = get_devices(i);
+		cgpu = get_a_device(i);
 		notifystatus(io_data, i, cgpu, isjson, group);
 	}
 
@@ -3183,7 +3183,7 @@ static void devdetails(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
 		io_open = io_add(io_data, COMSTR JSON_DEVDETAILS);
 
 	for (i = 0; i < total_devices; i++) {
-		cgpu = get_devices(i);
+		cgpu = get_a_device(i);
 
 		root = api_add_int(root, "DEVDETAILS", &i, false);
 		root = api_add_string(root, "Name", cgpu->drv->name, false);
@@ -3348,7 +3348,7 @@ static void minerstats(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
 
 	i = 0;
 	for (j = 0; j < total_devices; j++) {
-		cgpu = get_devices(j);
+		cgpu = get_a_device(j);
 
 		if (cgpu && cgpu->drv) {
 			if (cgpu->drv->get_api_stats)
@@ -3387,7 +3387,7 @@ static void minerdebug(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __m
 
 	i = 0;
 	for (j = 0; j < total_devices; j++) {
-		cgpu = get_devices(j);
+		cgpu = get_a_device(j);
 
 		if (cgpu && cgpu->drv) {
 			if (cgpu->drv->get_api_debug)
@@ -3431,7 +3431,7 @@ static void minerestats(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __
 
 	i = 0;
 	for (j = 0; j < total_devices; j++) {
-		cgpu = get_devices(j);
+		cgpu = get_a_device(j);
 		if (!cgpu)
 			continue;
 #ifdef USE_USBUTILS
@@ -3647,7 +3647,7 @@ static void pgaset(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe
 		return;
 	}
 
-	cgpu = get_devices(dev);
+	cgpu = get_a_device(dev);
 	drv = cgpu->drv;
 
 	char *set = strchr(opt, ',');
@@ -3810,7 +3810,7 @@ static void ascenable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, char
 		return;
 	}
 
-	cgpu = get_devices(dev);
+	cgpu = get_a_device(dev);
 
 	applog(LOG_DEBUG, "API: request to ascenable ascid %d device %d %s%u",
 			id, dev, cgpu->drv->name, cgpu->device_id);
@@ -3875,7 +3875,7 @@ static void ascdisable(struct io_data *io_data, __maybe_unused SOCKETTYPE c, cha
 		return;
 	}
 
-	cgpu = get_devices(dev);
+	cgpu = get_a_device(dev);
 
 	applog(LOG_DEBUG, "API: request to ascdisable ascid %d device %d %s%u",
 			id, dev, cgpu->drv->name, cgpu->device_id);
@@ -3919,7 +3919,7 @@ static void ascidentify(struct io_data *io_data, __maybe_unused SOCKETTYPE c, ch
 		return;
 	}
 
-	cgpu = get_devices(dev);
+	cgpu = get_a_device(dev);
 	drv = cgpu->drv;
 
 	if (!drv->identify_device)
@@ -3989,7 +3989,7 @@ static void ascset(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __maybe
 		return;
 	}
 
-	cgpu = get_devices(dev);
+	cgpu = get_a_device(dev);
 	drv = cgpu->drv;
 
 	char *set = strchr(opt, ',');
@@ -4043,7 +4043,7 @@ static void lcddata(struct io_data *io_data, __maybe_unused SOCKETTYPE c, __mayb
 	temp = 0;
 	last_device_valid_work = 0;
 	for (i = 0; i < total_devices; i++) {
-		cgpu = get_devices(i);
+		cgpu = get_a_device(i);
 		if (last_device_valid_work == 0 ||
 		    last_device_valid_work < cgpu->last_device_valid_work)
 			last_device_valid_work = cgpu->last_device_valid_work;
