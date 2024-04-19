@@ -2169,7 +2169,7 @@ static bool __release_cgpu(struct cgpu_info *cgpu)
 
 	// Any devices sharing the same USB device should be marked also
 	for (i = 0; i < total_devices; i++) {
-		lookcgpu = get_devices(i);
+		lookcgpu = get_a_device(i);
 		if (lookcgpu != cgpu && lookcgpu->usbdev == cgusb) {
 			if (initted) {
 				total_count--;
@@ -3931,7 +3931,7 @@ void usb_set_dev_start(struct cgpu_info *cgpu)
 		cgtime(&now);
 
 		for (i = 0; i < total_devices; i++) {
-			cgpu2 = get_devices(i);
+			cgpu2 = get_a_device(i);
 			if (cgpu2->usbdev == cgusb)
 				copy_time(&(cgpu2->dev_start_tv), &now);
 		}
@@ -4230,7 +4230,7 @@ static bool resource_lock(const char *dname, uint8_t bus_number, uint8_t device_
 		case WAIT_ABANDONED:
 			// Am I using it already?
 			for (i = 0; i < total_devices; i++) {
-				cgpu = get_devices(i);
+				cgpu = get_a_device(i);
 				if (cgpu->usbinfo.bus_number == bus_number &&
 				    cgpu->usbinfo.device_address == device_address &&
 				    cgpu->usbinfo.nodev == false) {

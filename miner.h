@@ -1671,7 +1671,7 @@ extern struct work *copy_work_noffset(struct work *base_work, int noffset);
 #define copy_work(work_in) copy_work_noffset(work_in, 0)
 extern uint64_t share_diff(const struct work *work);
 extern struct thr_info *get_thread(int thr_id);
-extern struct cgpu_info *get_devices(int id);
+extern struct cgpu_info *get_a_device(int id);
 
 enum api_data_type {
 	API_ESCAPE,
